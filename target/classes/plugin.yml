@@ -1,0 +1,5 @@
+name: Heartsteal
+main: me.verxus.Heartsteal.HeartstealPlugin
+version: 1.0
+api-version: 1.12
+description: Lifesteal plugin for 1.12x. Best paired with ViaVersion to allow newer version to join!

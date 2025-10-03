@@ -7,7 +7,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class LifestealPlugin extends JavaPlugin implements Listener {
+public class HeartstealPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
