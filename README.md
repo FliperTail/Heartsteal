@@ -7,3 +7,15 @@ Heartsteal should work in the newer versions but was mainly made for 1.12.2 so k
 
 You won't get much support if you run it in anything other than 1.12.2!
 
+# Information
+How to make a heart:
+It's pretty simple actually but luckly I have screenshot!
+
+![heart crafting](https://i.imgur.com/MF6Nk68.png)
+
+How to make a Revive Heart:
+It's a bit more pricey but it's very simple like the last one.
+
+![revive heart crafting](https://i.imgur.com/6scqGNe.png)
+
+**Please note both things have to be in the EXACT order.**
