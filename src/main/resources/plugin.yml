@@ -8,3 +8,9 @@ commands:
   withdraw:
     description: Withdraws a heart to give or store for later.
     usage: /withdraw
+  info:
+    description: Tells the version info and the creator of the plugin.
+    usage: /info
+  giveheart:
+      description: Gives a player a heart via admin,
+      usage: /giveheart <player> <amount>
