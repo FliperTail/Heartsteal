@@ -50,9 +50,9 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         Bukkit.addRecipe(heartRecipe);
 
         // Revive Heart item
-        ItemStack reviveHeart = new ItemStack(Material.NETHER_STAR);
+        ItemStack reviveHeart = new ItemStack(Material.ENDER_PEARL);
         ItemMeta reviveMeta = reviveHeart.getItemMeta();
-        reviveMeta.setDisplayName("§bRevive Heart");
+        reviveMeta.setDisplayName("§b❤ Revive Heart ❤");
         reviveHeart.setItemMeta(reviveMeta);
 
         // Crafting recipe
@@ -137,10 +137,10 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         }
 
         // Revive Heart usage
-        if ("§bRevive Heart".equals(name)) {
+        if ("§b❤ Revive Heart ❤".equals(name)) {
             event.setCancelled(true);
 
-            Inventory gui = Bukkit.createInventory(null, 9, "§bRevive Players");
+            Inventory gui = Bukkit.createInventory(null, 18, "§a§l!Revive Players!");
 
             for (Player dead : deadPlayers) {
                 ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
