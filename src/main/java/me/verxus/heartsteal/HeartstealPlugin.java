@@ -110,7 +110,6 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
 
         // Consume the item
         item.setAmount(item.getAmount() - 1);
-        player.getInventory().setItem(event.getHand(), item);
 
         // Add 1 heart
         player.setMaxHealth(player.getMaxHealth() + 2.0);
