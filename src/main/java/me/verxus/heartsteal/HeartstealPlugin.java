@@ -36,7 +36,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
             // Create the Heart item
             ItemStack heart = new ItemStack(Material.NETHER_STAR, 1);
             ItemMeta meta = heart.getItemMeta();
-            meta.setDisplayName("§c❤ Heart");
+            meta.setDisplayName("§c❤ Heart ❤");
             heart.setItemMeta(meta);
 
             // Give it to the player
