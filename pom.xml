@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>me.verxus</groupId>
     <artifactId>Heartsteal</artifactId>
-    <version>1.0-ALPHA</version>
+    <version>1.1-ALPHA</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -27,6 +27,11 @@
             <artifactId>spigot-api</artifactId>
             <version>1.12.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
         </dependency>
     </dependencies>
 </project>

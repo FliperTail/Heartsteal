@@ -18,11 +18,24 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 public class HeartstealPlugin extends JavaPlugin implements Listener {
+
+    private final String VERSION = "1.1-ALPHA";
+    private final String MODRINTH_PROJECT = "heartsteal";
 
     private List<Player> deadPlayers = new ArrayList<>();
 
@@ -82,20 +95,18 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         victim.getWorld().strikeLightningEffect(victim.getLocation());
 
         double victimMax = victim.getMaxHealth();
-
         if (killer instanceof Player) {
-            // PvP kill: steal heart
             if (victimMax > 2.0) victim.setMaxHealth(victimMax - 2.0);
-            killer.setMaxHealth(killer.getMaxHealth() + 2.0);
 
-            killer.sendMessage("§aYou stole a heart from " + victim.getName() + "!");
-            victim.sendMessage("§cYou got killed by " + killer.getName() + " and lost a heart!");
-        } else {
-            // Natural death: remove a heart
-            if (victimMax > 2.0) {
-                victim.setMaxHealth(victimMax - 2.0);
-                victim.sendMessage("§cYou died and lost a heart!");
+            double killerMax = killer.getMaxHealth();
+            if (killerMax < 42.0) {
+                killer.setMaxHealth(Math.min(42.0, killerMax + 2.0));
+                killer.sendMessage("§aYou stole a heart from " + victim.getName() + "!");
+            } else {
+                killer.sendMessage("§eYou are already at the max of 21 hearts!");
             }
+
+            victim.sendMessage("§cYou got killed by " + killer.getName() + " and lost a heart!");
         }
 
         // Check if dead
@@ -129,10 +140,17 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
 
         if ("§c❤ Heart".equals(name)) {
             event.setCancelled(true);
+
+            double currentMax = player.getMaxHealth();
+            if (currentMax >= 42.0) {
+                player.sendMessage("§eYou already have the maximum of 21 hearts!");
+                return;
+            }
+
             item.setAmount(item.getAmount() - 1);
             player.setItemInHand(item);
 
-            player.setMaxHealth(player.getMaxHealth() + 2.0);
+            player.setMaxHealth(Math.min(42.0, currentMax + 2.0));
             player.sendMessage("§aYou used a Heart and gained +1 max health!");
         }
 
@@ -219,9 +237,21 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         }
 
         if (command.getName().equalsIgnoreCase("info")) {
-            sender.sendMessage("§aHeartsteal");
-            sender.sendMessage("§aVersion: 1.0-ALPHA");
-            sender.sendMessage("§aAuthor: Verxus");
+            sender.sendMessage(ChatColor.GREEN + "Heartsteal Plugin");
+            sender.sendMessage(ChatColor.GREEN + "Version: " + VERSION);
+            sender.sendMessage(ChatColor.GREEN + "Author: Verxus");
+
+            getServer().getScheduler().runTaskAsynchronously(this, () -> {
+                String latest = fetchLatestVersionFromModrinth("heartsteal");
+                if (latest == null) {
+                    sender.sendMessage(ChatColor.RED + "Failed to check for updates (Modrinth API unreachable).");
+                } else if (!latest.equalsIgnoreCase(VERSION)) {
+                    sender.sendMessage(ChatColor.YELLOW + "A new version is available: " + latest);
+                    sender.sendMessage(ChatColor.GRAY + "Check it out on Modrinth: https://modrinth.com/plugin/" + MODRINTH_PROJECT);
+                } else {
+                    sender.sendMessage(ChatColor.GREEN + "You are using the latest version!");
+                }
+            });
             return true;
         }
 
@@ -262,5 +292,37 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         }
 
         return false;
+    }
+
+   @SuppressWarnings("unchecked")
+    private String fetchLatestVersionFromModrinth(String projectId) {
+        try {
+            URL url = new URL("https://api.modrinth.com/v2/project/" + projectId + "/version");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("User-Agent", "HeartstealPlugin/1.1-ALPHA");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            // Parse as JSON array
+            JSONParser parser = new JSONParser();
+            JSONArray versions = (JSONArray) parser.parse(response.toString());
+            if (versions.isEmpty()) return null;
+
+            JSONObject latest = (JSONObject) versions.get(0);
+            return (String) latest.get("version_number");
+
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("Failed to check Modrinth API: " + e.getMessage());
+            return null;
+        }
     }
 }
