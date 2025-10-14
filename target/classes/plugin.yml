@@ -1,6 +1,6 @@
 name: Heartsteal
 main: me.verxus.heartsteal.HeartstealPlugin
-version: 1.0
+version: 2.0-ALPHA
 api-version: 1.12
 description: Heartsteal plugin for 1.12.2.
 
@@ -9,7 +9,7 @@ commands:
     description: Withdraws a heart to give or store for later.
     usage: /withdraw
   info:
-    description: Tells the version info and the creator of the plugin.
+    description: Tells the version info and the creator of the plugin. As well seeing if the current version is up to date!
     usage: /info
   giveheart:
       description: Gives a player a heart via admin,

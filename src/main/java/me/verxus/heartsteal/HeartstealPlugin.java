@@ -22,7 +22,7 @@ import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.UUID;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -34,48 +34,67 @@ import org.json.simple.parser.JSONParser;
 
 public class HeartstealPlugin extends JavaPlugin implements Listener {
 
-    private final String VERSION = "1.1-ALPHA";
+    private final String VERSION = "2.0-ALPHA";
     private final String MODRINTH_PROJECT = "heartsteal";
 
     private List<Player> deadPlayers = new ArrayList<>();
+    private List<UUID> selfRevivePlayers = new ArrayList<>();
 
     @Override
     public void onEnable() {
+        getLogger().info("bStats metrics enabled!");
         Bukkit.getPluginManager().registerEvents(this, this);
 
         // Create custom Heart item
         ItemStack heart = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = heart.getItemMeta();
-        meta.setDisplayName("§c❤ Heart");
+        meta.setDisplayName("§c§l❤ Heart");
         heart.setItemMeta(meta);
 
         // Heart item recipe
         ItemStack heartRecipeItem = new ItemStack(Material.NETHER_STAR);
         ItemMeta heartMeta = heartRecipeItem.getItemMeta();
-        heartMeta.setDisplayName("§c❤ Heart");
+        heartMeta.setDisplayName("§c§l❤ Heart");
         heartRecipeItem.setItemMeta(heartMeta);
 
         ShapedRecipe heartRecipe = new ShapedRecipe(heartRecipeItem);
         heartRecipe.shape("DDD", "GNG", "DDD");
         heartRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
         heartRecipe.setIngredient('N', Material.NETHER_STAR);
-        heartRecipe.setIngredient('G', Material.GOLD_INGOT);
+        heartRecipe.setIngredient('G', Material.GOLD_BLOCK);
         Bukkit.addRecipe(heartRecipe);
 
         // Revive Heart item
-        ItemStack reviveHeart = new ItemStack(Material.ENDER_PEARL);
+        ItemStack reviveHeart = new ItemStack(Material.NETHER_STAR);
         ItemMeta reviveMeta = reviveHeart.getItemMeta();
-        reviveMeta.setDisplayName("§b❤ Revive Heart ❤");
+        reviveMeta.setDisplayName("§b§l❤ Revive Heart ❤");
         reviveHeart.setItemMeta(reviveMeta);
 
         // Crafting recipe
         ShapedRecipe reviveRecipe = new ShapedRecipe(reviveHeart);
-        reviveRecipe.shape("DAD", "EGE", "DAD");
+        reviveRecipe.shape("DAD", "ENE", "DAD");
         reviveRecipe.setIngredient('D', Material.DIAMOND_BLOCK);
         reviveRecipe.setIngredient('A', Material.GOLDEN_APPLE);
         reviveRecipe.setIngredient('E', Material.EMERALD);
-        reviveRecipe.setIngredient('G', Material.GOLD_BLOCK);
+        reviveRecipe.setIngredient('N', Material.NETHER_STAR);
         Bukkit.addRecipe(reviveRecipe);
+
+        // Self Revive Token
+        ItemStack selfRevive = new ItemStack(Material.NETHER_STAR);
+        ItemMeta selfMeta = selfRevive.getItemMeta();
+        selfMeta.setDisplayName("§6§l❤ Self Revive Token ❤");
+        selfRevive.setItemMeta(selfMeta);
+
+        // Crafting recipe
+        ShapedRecipe selfReviveRecipe = new ShapedRecipe(selfRevive);
+        selfReviveRecipe.shape("GEG", "NTN", "GEG");
+        selfReviveRecipe.setIngredient('G', Material.GOLD_BLOCK);
+        selfReviveRecipe.setIngredient('E', Material.EMERALD_BLOCK);
+        selfReviveRecipe.setIngredient('N', Material.NETHER_STAR);
+        selfReviveRecipe.setIngredient('T', Material.TOTEM);
+        Bukkit.addRecipe(selfReviveRecipe);
+
+        MetricsManager.setupMetrics(this);
 
         getLogger().info("Heartsteal plugin enabled!");
     }
@@ -109,6 +128,22 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
             victim.sendMessage("§cYou got killed by " + killer.getName() + " and lost a heart!");
         }
 
+
+        if (selfRevivePlayers.contains(victim.getUniqueId())) {
+            selfRevivePlayers.remove(victim.getUniqueId());
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    victim.spigot().respawn();
+                    victim.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                    victim.setHealth(2.0);
+                }
+            }.runTaskLater(this, 20L);
+
+            return;
+        }
+
         // Check if dead
         if (victim.getMaxHealth() <= 2.0) {
             deadPlayers.add(victim);
@@ -138,7 +173,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
 
         String name = item.getItemMeta().getDisplayName();
 
-        if ("§c❤ Heart".equals(name)) {
+        if ("§c§l❤ Heart".equals(name)) {
             event.setCancelled(true);
 
             double currentMax = player.getMaxHealth();
@@ -155,7 +190,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
         }
 
         // Revive Heart usage
-        if ("§b❤ Revive Heart ❤".equals(name)) {
+        if ("§b§l❤ Revive Heart ❤".equals(name)) {
             event.setCancelled(true);
 
             Inventory gui = Bukkit.createInventory(null, 18, "§a§l!Revive Players!");
@@ -174,26 +209,46 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
             item.setAmount(item.getAmount() - 1);
             player.setItemInHand(item);
         }
+
+        if ("§6§l❤ Self Revive Token ❤".equals(name)) {
+            event.setCancelled(true);
+
+            if (selfRevivePlayers.contains(player.getUniqueId())) {
+                player.sendMessage("§4§lYou already have a self revive at the ready!");
+                return;
+            }
+
+            selfRevivePlayers.add(player.getUniqueId());
+            player.sendMessage("§6§lYou used a self revive! It will now be used to bring you back when you die!");
+
+            item.setAmount(item.getAmount() - 1);
+            player.setItemInHand(item);
+        }
     }
 
     // Revive GUI click
     @EventHandler
     public void onReviveGUIClick(InventoryClickEvent event) {
-        if (!event.getView().getTitle().equals("§bRevive Players")) return;
+        String guiTitle = "§a§l!Revive Players!";
+        if (!event.getView().getTitle().equals(guiTitle)) return;
 
-        event.setCancelled(true);
+        event.setCancelled(true); // Cancel all clicks immediately
 
-        if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
-        if (!(event.getCurrentItem().getItemMeta() instanceof SkullMeta)) return;
+        ItemStack clicked = event.getCurrentItem();
+        if (clicked == null || !clicked.hasItemMeta()) return;
 
-        SkullMeta meta = (SkullMeta) event.getCurrentItem().getItemMeta();
-        String playerName = meta.getDisplayName().replace("§a", "");
-        Player toRevive = Bukkit.getPlayer(playerName);
+        ItemMeta meta = clicked.getItemMeta();
+        if (!(meta instanceof SkullMeta)) return;
+
+        String playerName = ChatColor.stripColor(meta.getDisplayName());
+        Player toRevive = Bukkit.getPlayerExact(playerName);
+
         if (toRevive == null) {
             event.getWhoClicked().sendMessage("§cThat player is not online!");
             return;
         }
 
+        // Revive logic
         toRevive.setGameMode(org.bukkit.GameMode.SURVIVAL);
         toRevive.setMaxHealth(10.0);
         toRevive.setHealth(10.0);
@@ -228,7 +283,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
 
             ItemStack heart = new ItemStack(Material.NETHER_STAR, 1);
             ItemMeta meta = heart.getItemMeta();
-            meta.setDisplayName("§c❤ Heart");
+            meta.setDisplayName("§c§l❤ Heart");
             heart.setItemMeta(meta);
 
             player.getInventory().addItem(heart);
@@ -282,7 +337,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
 
             ItemStack heart = new ItemStack(Material.NETHER_STAR, amount);
             ItemMeta meta = heart.getItemMeta();
-            meta.setDisplayName("§c❤ Heart");
+            meta.setDisplayName("§c§l❤ Heart");
             heart.setItemMeta(meta);
 
             target.getInventory().addItem(heart);
@@ -300,7 +355,7 @@ public class HeartstealPlugin extends JavaPlugin implements Listener {
             URL url = new URL("https://api.modrinth.com/v2/project/" + projectId + "/version");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "HeartstealPlugin/1.1-ALPHA");
+            connection.setRequestProperty("User-Agent", "HeartstealPlugin/2.0-ALPHA");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
 
