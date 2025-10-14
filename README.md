@@ -26,8 +26,10 @@ This image is a crafting recipe of a self-revive token letting you bring yoursel
 
 You can find me on these platfroms down below
 
-[Github](https://github.com/FliperTail)
+[Modrinth](https://modrinth.com/user/Verxus)
 
 [Ko-Fi](https://ko-fi.com/verxus)
 
-(Those are it lol)
+[Modrinth Project Page](https://modrinth.com/plugin/heartsteal)
+
+(That's it for now! Modrinth about me is different than the Github Version!)
